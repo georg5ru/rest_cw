@@ -46,11 +46,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest-cov
+        pip install -r habit_tracker/requirements.txt
+        pip install pytest pytest-django pytest-cov
 
     - name: Run migrations
       run: |
+        cd habit_tracker
         python manage.py migrate
       env:
         DEBUG: True
@@ -64,6 +65,7 @@ jobs:
 
     - name: Run tests
       run: |
+        cd habit_tracker
         pytest --cov=. --cov-report=xml
       env:
         DEBUG: True
