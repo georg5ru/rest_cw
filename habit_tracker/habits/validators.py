@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
+from django.utils.deconstruct import deconstructible
 
 
+@deconstructible
 class HabitTimeValidator:
     """Валидатор времени выполнения (не больше 120 секунд)"""
 
@@ -11,6 +13,7 @@ class HabitTimeValidator:
             raise ValidationError('Время выполнения должно быть больше 0')
 
 
+@deconstructible
 class HabitRewardValidator:
     """Валидатор вознаграждения и связанной привычки"""
 
