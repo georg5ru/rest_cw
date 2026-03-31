@@ -6,6 +6,25 @@ on:
   pull_request:
     branches: [ main, master ]
 
+env:
+  DEBUG: "True"
+  SECRET_KEY: "test-secret-key-for-ci-cd-pipeline"
+  ALLOWED_HOSTS: "localhost,127.0.0.1"
+  DB_NAME: "test_db"
+  DB_USER: "postgres"
+  DB_PASSWORD: "postgres"
+  DB_HOST: "localhost"
+  DB_PORT: "5432"
+  CELERY_BROKER_URL: "redis://localhost:6379/0"
+  TELEGRAM_BOT_TOKEN: "test-token"
+  JWT_ACCESS_TOKEN_LIFETIME_MINUTES: "60"
+  JWT_REFRESH_TOKEN_LIFETIME_DAYS: "1"
+  CORS_ALLOWED_ORIGINS: "http://localhost:3000"
+  STATIC_URL: "/static/"
+  STATIC_ROOT: "staticfiles"
+  MEDIA_URL: "/media/"
+  MEDIA_ROOT: "media"
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -49,38 +68,13 @@ jobs:
         pip install -r habit_tracker/requirements.txt
         pip install pytest pytest-django pytest-cov
 
-    - name: Create .env file for tests
-      run: |
-        cd habit_tracker
-        cat > .env << 'EOF'
-DEBUG=True
-SECRET_KEY=test-secret-key-for-ci-cd-pipeline
-ALLOWED_HOSTS=localhost,127.0.0.1
-DB_NAME=test_db
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_HOST=localhost
-DB_PORT=5432
-CELERY_BROKER_URL=redis://localhost:6379/0
-TELEGRAM_BOT_TOKEN=test-token
-JWT_ACCESS_TOKEN_LIFETIME_MINUTES=60
-JWT_REFRESH_TOKEN_LIFETIME_DAYS=1
-CORS_ALLOWED_ORIGINS=http://localhost:3000
-STATIC_URL=/static/
-STATIC_ROOT=staticfiles
-MEDIA_URL=/media/
-MEDIA_ROOT=media
-EOF
-
     - name: Run migrations
-      run: |
-        cd habit_tracker
-        python manage.py migrate
+      working-directory: habit_tracker
+      run: python manage.py migrate
 
     - name: Run tests
-      run: |
-        cd habit_tracker
-        pytest --cov=. --cov-report=xml || true
+      working-directory: habit_tracker
+      run: pytest --cov=. --cov-report=xml || true
 
   deploy:
     needs: test
@@ -98,22 +92,16 @@ EOF
         script: |
           cd /home/ubuntu/rest_cw/habit_tracker
           
-          # Pull latest code
           git pull origin ${{ github.ref_name }}
           
-          # Activate virtual environment
           source /home/ubuntu/venv/bin/activate
           
-          # Install dependencies
           pip install -r requirements.txt
           
-          # Run migrations
           python manage.py migrate
           
-          # Collect static files
           python manage.py collectstatic --noinput
           
-          # Restart services
           sudo systemctl restart gunicorn
           sudo supervisorctl restart celery
           sudo supervisorctl restart celery-beat
